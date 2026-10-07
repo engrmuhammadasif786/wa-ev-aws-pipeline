@@ -26,6 +26,8 @@ module "iam" {
   project_name        = var.project_name
   raw_bucket_arn      = module.s3.raw_bucket_arn
   curated_bucket_arn  = module.s3.curated_bucket_arn
+  github_repository   = var.github_repository
+  github_branch       = var.github_branch
   tags                = var.tags
 }
 

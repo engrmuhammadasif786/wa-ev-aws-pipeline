@@ -46,6 +46,18 @@ variable "schedule_expression" {
   default     = "cron(0 8 1 * ? *)" # Monthly on 1st at 08:00 UTC
 }
 
+variable "github_repository" {
+  description = "GitHub repository allowed to deploy through OIDC, in owner/repository format"
+  type        = string
+  default     = "engrmuhammadasif786/wa-ev-aws-pipeline"
+}
+
+variable "github_branch" {
+  description = "Git branch allowed to assume the GitHub Actions deployment role"
+  type        = string
+  default     = "main"
+}
+
 variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)

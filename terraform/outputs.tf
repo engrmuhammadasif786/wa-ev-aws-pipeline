@@ -37,3 +37,8 @@ output "ecs_cluster_name" {
   description = "ECS cluster name"
   value       = module.ecs.cluster_name
 }
+
+output "github_actions_role_arn" {
+  description = "Role ARN to set as the GitHub Actions AWS_ROLE_ARN repository secret"
+  value       = module.iam.github_actions_role_arn
+}
