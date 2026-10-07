@@ -47,9 +47,9 @@ variable "schedule_expression" {
 }
 
 variable "github_repository" {
-  description = "GitHub repository allowed to deploy through OIDC, in owner/repository format"
+  description = "GitHub immutable OIDC repository subject prefix, excluding the leading repo:"
   type        = string
-  default     = "engrmuhammadasif786/wa-ev-aws-pipeline"
+  default     = "engrmuhammadasif786@84713360/wa-ev-aws-pipeline@1409100059"
 }
 
 variable "github_branch" {

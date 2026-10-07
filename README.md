@@ -384,9 +384,8 @@ GitHub Actions workflow (`.github/workflows/deploy.yml`):
 Requires AWS OIDC federation configured in repository secrets (`AWS_ROLE_ARN`).
 
 The Terraform IAM module creates the GitHub Actions OIDC provider and a role
-trusted only by the configured repository and branch (`github_repository` and
-`github_branch` Terraform variables). Bootstrap Terraform once using credentials
-that can create IAM roles and an OIDC provider, then copy
+trusted only by the configured immutable repository subject and branch
+(`github_repository` and `github_branch` Terraform variables).  Copy
 `terraform output -raw github_actions_role_arn` into the repository's
 **Settings > Secrets and variables > Actions** as `AWS_ROLE_ARN`. The role uses
 `PowerUserAccess` for infrastructure deployment and grants IAM management only

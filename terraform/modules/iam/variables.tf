@@ -11,7 +11,7 @@ variable "curated_bucket_arn" {
 }
 
 variable "github_repository" {
-  description = "GitHub repository allowed to deploy through OIDC, in owner/repository format"
+  description = "GitHub immutable OIDC repository subject prefix, excluding the leading repo:"
   type        = string
 }
 
