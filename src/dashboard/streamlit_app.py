@@ -25,6 +25,13 @@ S3_STAGING_DIR = os.environ.get("ATHENA_S3_STAGING_DIR", "")
 ATHENA_DATABASE = os.environ.get("ATHENA_DATABASE", "wa_ev_db")
 ATHENA_TABLE = os.environ.get("ATHENA_TABLE", "curated_ev_data")
 ATHENA_WORKGROUP = os.environ.get("ATHENA_WORKGROUP", "primary")
+DASHBOARD_EXCEPTIONS = (
+    AttributeError,
+    OSError,
+    TypeError,
+    ValueError,
+    pd.errors.EmptyDataError,
+)
 
 if not S3_STAGING_DIR:
     # Derive from curated bucket if available
@@ -127,7 +134,7 @@ try:
     col1.metric("Total EVs", f"{total_ev:,}")
     col2.metric("Battery EVs (BEV)", f"{bev_total:,}")
     col3.metric("Plug-in Hybrids (PHEV)", f"{phev_total:,}")
-except Exception as e:
+except DASHBOARD_EXCEPTIONS as e:
     st.error(f"Failed to load summary metrics: {e}")
     total_ev = 0
 
@@ -156,7 +163,7 @@ with col_left:
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No data available for make distribution.")
-    except Exception as e:
+    except DASHBOARD_EXCEPTIONS as e:
         st.error(f"Error loading make distribution: {e}")
 
 with col_right:
@@ -176,7 +183,7 @@ with col_right:
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No data available for EV type distribution.")
-    except Exception as e:
+    except DASHBOARD_EXCEPTIONS as e:
         st.error(f"Error loading EV type distribution: {e}")
 
 st.markdown("---")
@@ -190,7 +197,9 @@ with col_left2:
     try:
         year_df = get_ev_by_model_year()
         if not year_df.empty:
-            year_df["model_year"] = pd.to_numeric(year_df["model_year"], errors="coerce")
+            year_df["model_year"] = pd.to_numeric(
+                year_df["model_year"], errors="coerce"
+            )
             year_df = year_df.dropna(subset=["model_year"])
             year_df = year_df.sort_values("model_year")
 
@@ -202,12 +211,12 @@ with col_left2:
                 labels={"model_year": "Model Year", "ev_count": "Number of EVs"},
                 title="EV Registrations Over Time",
             )
-            fig.update_traces(line_color="#2ca02c", marker=dict(size=8))
+            fig.update_traces(line_color="#2ca02c", marker={"size": 8})
             fig.update_layout(height=450)
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No data available for model year distribution.")
-    except Exception as e:
+    except DASHBOARD_EXCEPTIONS as e:
         st.error(f"Error loading model year distribution: {e}")
 
 with col_right2:
@@ -228,7 +237,7 @@ with col_right2:
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No data available for county distribution.")
-    except Exception as e:
+    except DASHBOARD_EXCEPTIONS as e:
         st.error(f"Error loading county distribution: {e}")
 
 st.markdown("---")

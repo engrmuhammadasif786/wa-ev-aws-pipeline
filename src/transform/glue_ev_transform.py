@@ -8,7 +8,7 @@ Designed to run as a Glue Python Shell job (0.0625 DPU).
 import argparse
 import logging
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 
 import awswrangler as wr
 import pandas as pd
@@ -42,7 +42,17 @@ COLUMN_MAP = {
 }
 
 INTEGER_COLS = ["model_year", "electric_range", "base_msrp"]
-STRING_COLS = ["vin_prefix", "county", "city", "state", "postal_code", "make", "model", "ev_type", "cafv_eligibility"]
+STRING_COLS = [
+    "vin_prefix",
+    "county",
+    "city",
+    "state",
+    "postal_code",
+    "make",
+    "model",
+    "ev_type",
+    "cafv_eligibility",
+]
 
 
 def read_raw_data(s3_path: str) -> pd.DataFrame:
@@ -96,20 +106,25 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
 
     # Derive is_bev flag
-    df["is_bev"] = df["ev_type"].str.contains("Battery Electric Vehicle", case=False, na=False)
+    df["is_bev"] = df["ev_type"].str.contains(
+        "Battery Electric Vehicle", case=False, na=False
+    )
 
     # Calculate vehicle age (current year - model year)
-    current_year = datetime.now().year
+    current_year = datetime.now(UTC).year
     df["vehicle_age"] = current_year - df["model_year"]
     df["vehicle_age"] = df["vehicle_age"].where(df["vehicle_age"] >= 0, pd.NA)
 
     # Standardize CAFV eligibility
     df["cafv_eligibility_clean"] = df["cafv_eligibility"].apply(
         lambda x: (
-            "Eligible" if isinstance(x, str) and "eligible" in x.lower() and "not" not in x.lower()
-            else "Not Eligible" if isinstance(x, str) and "not eligible" in x.lower()
-            else "Unknown" if pd.isna(x) or x is None
-            else "Unknown"
+            "Eligible"
+            if isinstance(x, str) and "eligible" in x.lower() and "not" not in x.lower()
+            else (
+                "Not Eligible"
+                if isinstance(x, str) and "not eligible" in x.lower()
+                else "Unknown"
+            )
         )
     )
 
@@ -118,7 +133,9 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(subset=["model_year", "county"])
     after = len(df)
     if before != after:
-        logger.warning(f"Dropped {before - after} rows with missing model_year or county")
+        logger.warning(
+            f"Dropped {before - after} rows with missing model_year or county"
+        )
 
     # Fill remaining nulls for safe Parquet writing
     df["make"] = df["make"].fillna("Unknown")
@@ -129,7 +146,9 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def write_curated_data(df: pd.DataFrame, s3_path: str, database: str, table: str) -> None:
+def write_curated_data(
+    df: pd.DataFrame, s3_path: str, database: str, table: str
+) -> None:
     """Write curated data as partitioned Parquet and update Glue Catalog."""
     logger.info(f"Writing curated data to {s3_path}")
 
@@ -154,7 +173,9 @@ def write_curated_data(df: pd.DataFrame, s3_path: str, database: str, table: str
 def main() -> None:
     parser = argparse.ArgumentParser(description="Transform WA EV data in Glue")
     parser.add_argument("--raw-path", required=True, help="S3 path to raw CSV data")
-    parser.add_argument("--curated-path", required=True, help="S3 path for curated output")
+    parser.add_argument(
+        "--curated-path", required=True, help="S3 path for curated output"
+    )
     parser.add_argument("--database", default="wa_ev_db", help="Glue catalog database")
     parser.add_argument("--table", default="curated_ev_data", help="Glue catalog table")
     args = parser.parse_args()

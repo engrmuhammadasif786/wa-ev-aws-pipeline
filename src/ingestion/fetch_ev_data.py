@@ -14,8 +14,8 @@ import os
 import sys
 import time
 import traceback
-from datetime import datetime
-from typing import Optional
+from datetime import UTC, datetime
+from typing import Any
 
 import boto3
 import requests
@@ -69,7 +69,9 @@ def fetch_page(
     }
 
     for attempt in range(1, max_retries + 1):
-        logger.info(f"Fetching offset={offset}, limit={limit} (attempt {attempt}/{max_retries})")
+        logger.info(
+            f"Fetching offset={offset}, limit={limit} (attempt {attempt}/{max_retries})"
+        )
         try:
             response = session.get(
                 API_ENDPOINT,
@@ -82,10 +84,12 @@ def fetch_page(
             try:
                 records = response.json()
             except json.JSONDecodeError as exc:
-                logger.error(f"Failed to decode JSON: {exc}. Response text: {response.text[:500]}")
+                logger.error(
+                    f"Failed to decode JSON: {exc}. Response text: {response.text[:500]}"
+                )
                 if attempt == max_retries:
                     raise
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
                 continue
 
             logger.info(f"Retrieved {len(records)} records")
@@ -96,7 +100,7 @@ def fetch_page(
             if attempt == max_retries:
                 logger.error("Max retries exceeded for timeout")
                 raise
-            wait_time = 2 ** attempt
+            wait_time = 2**attempt
             logger.info(f"Retrying in {wait_time}s...")
             time.sleep(wait_time)
 
@@ -108,7 +112,7 @@ def fetch_page(
             if attempt == max_retries:
                 logger.error("Max retries exceeded for HTTP error")
                 raise
-            wait_time = 2 ** attempt
+            wait_time = 2**attempt
             logger.info(f"Retrying in {wait_time}s...")
             time.sleep(wait_time)
 
@@ -117,7 +121,7 @@ def fetch_page(
             if attempt == max_retries:
                 logger.error("Max retries exceeded")
                 raise
-            wait_time = 2 ** attempt
+            wait_time = 2**attempt
             logger.info(f"Retrying in {wait_time}s...")
             time.sleep(wait_time)
 
@@ -127,7 +131,7 @@ def fetch_page(
 def fetch_ev_data(
     limit: int = DEFAULT_LIMIT,
     offset: int = 0,
-    max_records: Optional[int] = None,
+    max_records: int | None = None,
 ) -> list[dict]:
     """Fetch EV data from SODA API with pagination and retries."""
     session = _create_session()
@@ -137,7 +141,12 @@ def fetch_ev_data(
     while True:
         try:
             records = fetch_page(session, current_offset, limit)
-        except Exception as exc:
+        except (
+            requests.exceptions.RequestException,
+            ValueError,
+            TypeError,
+            RuntimeError,
+        ) as exc:
             logger.error(f"Fatal error fetching page at offset {current_offset}: {exc}")
             logger.error(traceback.format_exc())
             raise
@@ -166,7 +175,7 @@ def upload_to_s3(
     records: list[dict],
     bucket: str,
     prefix: str = "",
-    s3_client: Optional[boto3.client] = None,
+    s3_client: Any | None = None,
 ) -> str:
     """Serialize records to CSV and upload to S3."""
     if not records:
@@ -175,8 +184,12 @@ def upload_to_s3(
     if s3_client is None:
         s3_client = boto3.client("s3")
 
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    key = f"{prefix}ingest_date={today}/ev_data.csv" if prefix else f"ingest_date={today}/ev_data.csv"
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
+    key = (
+        f"{prefix}ingest_date={today}/ev_data.csv"
+        if prefix
+        else f"ingest_date={today}/ev_data.csv"
+    )
 
     # Normalize records to ensure all rows have same columns
     all_keys = set()
@@ -205,15 +218,30 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Ingest WA EV data to S3")
     parser.add_argument("--bucket", required=True, help="S3 bucket name for raw data")
     parser.add_argument("--prefix", default="", help="S3 key prefix")
-    parser.add_argument("--limit", type=int, default=DEFAULT_LIMIT, help="API page size (default: 10000)")
-    parser.add_argument("--max-records", type=int, default=None, help="Max total records to fetch (for testing)")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=DEFAULT_LIMIT,
+        help="API page size (default: 10000)",
+    )
+    parser.add_argument(
+        "--max-records",
+        type=int,
+        default=None,
+        help="Max total records to fetch (for testing)",
+    )
     args = parser.parse_args()
 
     try:
         records = fetch_ev_data(limit=args.limit, max_records=args.max_records)
         s3_uri = upload_to_s3(records, bucket=args.bucket, prefix=args.prefix)
         print(f"SUCCESS:{s3_uri}")
-    except Exception as exc:
+    except (
+        ValueError,
+        OSError,
+        requests.exceptions.RequestException,
+        RuntimeError,
+    ) as exc:
         logger.error(f"Pipeline failed: {exc}")
         logger.error(traceback.format_exc())
         sys.exit(1)

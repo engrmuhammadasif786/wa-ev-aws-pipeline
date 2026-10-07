@@ -6,7 +6,7 @@ Schedule: Monthly on the 1st at 08:00 UTC.
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
@@ -38,7 +38,7 @@ with DAG(
     default_args=DEFAULT_ARGS,
     description="Washington EV Population Data Pipeline (Local)",
     schedule_interval="0 8 1 * *",  # Monthly on 1st at 08:00 UTC
-    start_date=datetime(2024, 1, 1),
+    start_date=datetime(2024, 1, 1, tzinfo=UTC),
     catchup=False,
     tags=["wa_ev", "ingestion", "batch"],
 ) as dag:
