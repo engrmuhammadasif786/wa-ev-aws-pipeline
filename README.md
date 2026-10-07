@@ -414,6 +414,8 @@ Test coverage:
 
 ### Streamlit Dashboard
 
+Link: [wa-ev-aws-pipeline](https://wa-ev-aws-pipeline.streamlit.app/)
+
 ![Streamlit Dashboard](docs/streamlit-dashboard.png)
 
 ### QuickSight Dashboard
