@@ -44,9 +44,11 @@ class TestFetchEvData:
             "500 Error", response=response
         )
 
-        with patch("src.ingestion.fetch_ev_data.time.sleep"):
-            with pytest.raises(HTTPError):
-                fetch_ev_data(limit=10)
+        with (
+            patch("src.ingestion.fetch_ev_data.time.sleep"),
+            pytest.raises(HTTPError),
+        ):
+            fetch_ev_data(limit=10)
 
 
 class TestUploadToS3:
