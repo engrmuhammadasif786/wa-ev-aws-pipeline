@@ -20,19 +20,6 @@ resource "aws_sfn_state_machine" "pipeline" {
               AssignPublicIp = "ENABLED"
             }
           }
-          Overrides = {
-            ContainerOverrides = [
-              {
-                Name = "ingestion"
-                Command = [
-                  "python",
-                  "s3://${var.raw_bucket_name}/ingestion/fetch_ev_data.py",
-                  "--bucket",
-                  var.raw_bucket_name,
-                ]
-              }
-            ]
-          }
         }
         Next = "CheckIngestionResult"
       }
@@ -61,19 +48,6 @@ resource "aws_sfn_state_machine" "pipeline" {
               AssignPublicIp = "ENABLED"
             }
           }
-          Overrides = {
-            ContainerOverrides = [
-              {
-                Name = "trasform"
-                Command = [
-                  "python",
-                  "s3://${var.raw_bucket_name}/transform/glue_ev_transform.py",
-                  "--bucket",
-                  var.raw_bucket_name,
-                ]
-              }
-            ]
-          }
         }
         Next = "PipelineSuccess"
       }
@@ -81,7 +55,7 @@ resource "aws_sfn_state_machine" "pipeline" {
         Type = "Succeed"
       }
       PipelineFailed = {
-        Type = "Fail"
+        Type  = "Fail"
         Cause = "Ingestion task did not complete successfully"
       }
     }

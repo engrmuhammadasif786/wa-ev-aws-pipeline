@@ -23,12 +23,12 @@ module "s3" {
 module "iam" {
   source = "./modules/iam"
 
-  project_name        = var.project_name
-  raw_bucket_arn      = module.s3.raw_bucket_arn
-  curated_bucket_arn  = module.s3.curated_bucket_arn
-  github_repository   = var.github_repository
-  github_branch       = var.github_branch
-  tags                = var.tags
+  project_name       = var.project_name
+  raw_bucket_arn     = module.s3.raw_bucket_arn
+  curated_bucket_arn = module.s3.curated_bucket_arn
+  github_repository  = var.github_repository
+  github_branch      = var.github_branch
+  tags               = var.tags
 }
 
 # ---------------------------------------------------------------------------
@@ -64,10 +64,10 @@ module "athena" {
 module "ecs" {
   source = "./modules/ecs"
 
-  project_name    = var.project_name
-  ecs_role_arn    = module.iam.ecs_task_role_arn
+  project_name       = var.project_name
+  ecs_role_arn       = module.iam.ecs_task_role_arn
   execution_role_arn = module.iam.ecs_execution_role_arn
-  tags            = var.tags
+  tags               = var.tags
 }
 
 # ---------------------------------------------------------------------------
@@ -76,16 +76,16 @@ module "ecs" {
 module "step_functions" {
   source = "./modules/step_functions"
 
-  project_name        = var.project_name
-  ecs_cluster_arn     = module.ecs.cluster_arn
+  project_name                  = var.project_name
+  ecs_cluster_arn               = module.ecs.cluster_arn
   ingestion_ecs_task_definition = module.ecs.ingestion_task_definition_arn
   transform_ecs_task_definition = module.ecs.transform_task_definition_arn
-  subnet_ids          = data.aws_subnets.default.ids
-  security_group_id   = aws_security_group.ecs_tasks.id
-  raw_bucket_name     = module.s3.raw_bucket_name
-  curated_bucket_name     = module.s3.curated_bucket_name
-  state_machine_role_arn = module.iam.step_functions_role_arn
-  tags                = var.tags
+  subnet_ids                    = data.aws_subnets.default.ids
+  security_group_id             = aws_security_group.ecs_tasks.id
+  raw_bucket_name               = module.s3.raw_bucket_name
+  curated_bucket_name           = module.s3.curated_bucket_name
+  state_machine_role_arn        = module.iam.step_functions_role_arn
+  tags                          = var.tags
 }
 
 # ---------------------------------------------------------------------------

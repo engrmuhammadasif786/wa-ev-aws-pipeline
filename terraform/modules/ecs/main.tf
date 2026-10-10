@@ -15,19 +15,19 @@ resource "aws_ecs_task_definition" "ingestion" {
   family                   = "${var.project_name}-ingestion"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"  # 0.25 vCPU
-  memory                   = "512"  # 0.5 GB
+  cpu                      = "256" # 0.25 vCPU
+  memory                   = "512" # 0.5 GB
   execution_role_arn       = var.execution_role_arn
   task_role_arn            = var.ecs_role_arn
 
   container_definitions = jsonencode([
     {
-      name  = "ingestion"
-      image = "${aws_ecr_repository.main.repository_url}:latest"
+      name      = "ingestion"
+      image     = "${aws_ecr_repository.main.repository_url}:latest"
       essential = true
       command = [
         "python",
-        "s3://${var.raw_bucket_name}/ingestion/fetch_ev_data.py",
+        "/opt/airflow/src/ingestion/fetch_ev_data.py",
         "--bucket",
         "${var.raw_bucket_name}",
       ]
@@ -53,19 +53,19 @@ resource "aws_ecs_task_definition" "transform" {
   family                   = "${var.project_name}-transform"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"  # 0.25 vCPU
-  memory                   = "512"  # 0.5 GB
+  cpu                      = "256" # 0.25 vCPU
+  memory                   = "512" # 0.5 GB
   execution_role_arn       = var.execution_role_arn
   task_role_arn            = var.ecs_role_arn
 
   container_definitions = jsonencode([
     {
-      name  = "transform"
-      image = "${aws_ecr_repository.main.repository_url}:latest"
+      name      = "transform"
+      image     = "${aws_ecr_repository.main.repository_url}:latest"
       essential = true
       command = [
         "python",
-        "s3://${var.raw_bucket_name}/glue-scripts/glue_ev_transform.py",
+        "/opt/airflow/src/transform/glue_ev_transform.py",
         "--raw-path",
         "s3://${var.raw_bucket_name}/",
         "--curated-path",

@@ -1,10 +1,10 @@
 terraform {
   backend "s3" {
-    bucket         = "wa-ev-tf-state"
-    key            = "terraform.tfstate"
-    region         = "us-east-1"
+    bucket       = "wa-ev-tf-state"
+    key          = "terraform.tfstate"
+    region       = "us-east-1"
     use_lockfile = true
-    encrypt        = true
+    encrypt      = true
   }
 
   required_providers {
